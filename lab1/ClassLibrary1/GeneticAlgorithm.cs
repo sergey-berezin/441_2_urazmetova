@@ -26,10 +26,10 @@ namespace ClassLibrary1
             }
         }
 
-        public Route Run()
+        public void  Run()
         {
-            for (int generation = 0; generation < generations; generation++)
-            {
+            //for (int generation = 0; generation < generations; generation++)
+            //{
                 Random rand = new Random();
                 population = population.OrderBy(r => r.Length).ToList();
                 List<Route> newPopulation = new List<Route>();
@@ -42,7 +42,7 @@ namespace ClassLibrary1
                 while (newPopulation.Count < populationSize)
                 {
                     Route parent1 = population[rand.Next(populationSize/2)];
-                    Route parent2 = population[rand.Next(populationSize/2)];
+                    Route parent2 = population[rand.Next(populationSize/2, populationSize)];
 
                     Route child = Cross(parent1, parent2);
                     child.Mutate();
@@ -50,13 +50,19 @@ namespace ClassLibrary1
                     
                 }
 
-                population = newPopulation;
-                Route bestRoute = population.OrderBy(r => r.Length).First();
-                Console.WriteLine($"Generation: {generation}, Best Length: {bestRoute.Length}");
-                Console.WriteLine($"Best Route: {string.Join(", ", bestRoute.Cities)}");
-            }
+                /*foreach (Route route in newPopulation)
+                {
+                    Console.WriteLine(string.Join(" -> ", route.Cities));
+                    
+                }*/
 
-            return population.OrderBy(r => r.Length).First();
+            population = newPopulation;
+                //Route bestRoute = population.OrderBy(r => r.Length).First();
+                //Console.WriteLine($"Generation: {generation}, Best Length: {bestRoute.Length}");
+                //Console.WriteLine($"Best Route: {string.Join(", ", bestRoute.Cities)}");
+            //}
+
+            //return population.OrderBy(r => r.Length).First();
         }
 
     private Route Cross(Route parent1, Route parent2)
@@ -88,6 +94,30 @@ namespace ClassLibrary1
 
             return new Route(childCities.ToList(), distanceMatrix);
         }
-}
+
+        public double BestRouteLength()
+        {
+            return population.Min(elem => elem.Length);
+        }
+
+        public string BestRouteToString()
+        {
+            double bestLength = BestRouteLength();
+            List<Route> populationbest = new List<Route>();
+            foreach (Route route in population)
+                if (route.Length == bestLength)
+                {
+                    populationbest.Add(route);
+                }
+            string res = "Best Route: ";
+            foreach (Route route in populationbest)
+            {
+                res += string.Join(" -> ", route.Cities);
+                res += "\n";
+            }
+            
+            return res;
+        }
+    }
 
 }
