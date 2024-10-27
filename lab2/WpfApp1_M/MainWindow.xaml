@@ -1,0 +1,25 @@
+﻿<Window x:Class="WpfApp1_M.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfApp1_M"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+    <Grid RenderTransformOrigin="0.34,0.467">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="169" />
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <Grid Grid.Column="0">
+            <Button Click="GenerateMatrix_Click" Content="Генерировать" HorizontalAlignment="Center" Margin="0,56,0,0" VerticalAlignment="Top" Width="80"/>
+            <Button Click="StartGeneticAlgorithm_click" Content="StartGeneticAlgorithm" HorizontalAlignment="Center" Margin="0,379,0,0" VerticalAlignment="Top"/>
+        </Grid>
+        <TextBox x:Name="InputTextBox" HorizontalAlignment="Center" Margin="0,20,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="148" RenderTransformOrigin="-0.996,-1.64" Height="23"/>
+        <DataGrid x:Name="MatrixDataGrid" AutoGenerateColumns="False" Margin="10,102,10,107"/>
+        <Canvas x:Name="GraphCanvas" Background="White" Grid.Column="1"/>
+        <TextBlock x:Name="LegendTextBlock" Grid.Column="1" HorizontalAlignment="Left" Margin="490,19,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Height="30" Width="118"/>
+
+
+    </Grid>
+</Window>
