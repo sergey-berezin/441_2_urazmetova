@@ -1,5 +1,6 @@
 ﻿using ClassLibrary1;
 using System.Data;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -13,12 +14,13 @@ using System.Windows.Shapes;
 
 namespace WpfApp1_M
 {
-    
+
     public partial class MainWindow : Window
     {
-        double[,] matrix = new double[0,0];
+        double[,] matrix = new double[0, 0];
         private GeneticAlgorithm ga;
         private Point[] fixedCoordinates;
+        private List<Line> allLines = new List<Line>();
         private int generationCount = 0;
         public MainWindow()
         {
@@ -30,7 +32,7 @@ namespace WpfApp1_M
             if (ga != null)
             {
                 ga.Run();
-                DrawInitialGraph();
+                //DrawInitialGraph(GraphCanvas, matrix);
                 DisplayGeneration();
             }
             else
@@ -38,52 +40,101 @@ namespace WpfApp1_M
                 MessageBox.Show("Сначала сгенерируйте матрицу.");
             }
         }
-        private void DrawInitialGraph()
+        private void DrawInitialGraph(Canvas canvas, double[,] distanceMatrix)
         {
             ClearCanvas();
+            int size = distanceMatrix.GetLength(0);
+            Random rand = new Random();
+            Point[] points = new Point[size];
 
-            int cityCount = matrix.GetLength(0);
-            GetPointCoordinates(cityCount);
+            double centerX = canvas.ActualWidth / 2;
+            double centerY = canvas.ActualHeight / 2;
 
-            for (int i = 0; i < cityCount; i++)
+            points[0] = new Point(centerX, centerY);//первая точка идет в центр, остальные размещаются относительно ее
+            double initialRadius = 100;
+
+            for (int i = 1; i < size; i++)
             {
-                Point point = fixedCoordinates[i];
-                Ellipse cityPoint = new Ellipse
-                {
-                    Fill = Brushes.Blue,
-                    Width = 5,
-                    Height = 5
-                };
-                Canvas.SetLeft(cityPoint, point.X - 2.5);
-                Canvas.SetTop(cityPoint, point.Y - 2.5);
-                GraphCanvas.Children.Add(cityPoint);
+                double angle = rand.NextDouble() * 2 * Math.PI;
+                double radius = initialRadius + rand.Next(20, 50);
+                points[i] = new Point(centerX + radius * Math.Cos(angle),
+                                      centerY + radius * Math.Sin(angle));
 
-                for (int j = 0; j < cityCount; j++)
+                // Перемещаем точки дальше, если расстояние не соответствует
+                for (int j = 0; j < i; j++)
+                {
+                    double currentDistance = Distance(points[i], points[j]);
+                    while (currentDistance < distanceMatrix[i, j])
+                    {
+                        radius += 5;
+                        points[i] = new Point(centerX + radius * Math.Cos(angle),
+                                              centerY + radius * Math.Sin(angle));
+                        currentDistance = Distance(points[i], points[j]);
+                    }
+                }
+            }
+
+            fixedCoordinates = points;
+
+            for (int i = 0; i < size; i++)
+            {
+                for (int j = 0; j < size; j++)
                 {
                     if (i != j)
                     {
                         Line line = new Line
                         {
-                            X1 = point.X,
-                            Y1 = point.Y,
-                            X2 = fixedCoordinates[j].X,
-                            Y2 = fixedCoordinates[j].Y,
+                            X1 = points[i].X,
+                            Y1 = points[i].Y,
+                            X2 = points[j].X,
+                            Y2 = points[j].Y,
                             Stroke = Brushes.Gray,
-                            StrokeThickness = 0.5
+                            StrokeThickness = 1
                         };
-                        GraphCanvas.Children.Add(line);
+                        canvas.Children.Add(line);
+                        allLines.Add(line);
                     }
                 }
             }
+            
+            for (int i = 0; i < size; i++)
+            {
+                Ellipse ellipse = new Ellipse
+                {
+                    Width = 20,
+                    Height = 20,
+                    Fill = Brushes.Blue
+                };
+                Canvas.SetLeft(ellipse, points[i].X - 10);
+                Canvas.SetTop(ellipse, points[i].Y - 10);
+                canvas.Children.Add(ellipse);
+
+                TextBlock textBlock = new TextBlock
+                {
+                    Text = i.ToString(),
+                    Foreground = Brushes.White,
+                    FontWeight = FontWeights.Bold,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                Canvas.SetLeft(textBlock, points[i].X - 5);
+                Canvas.SetTop(textBlock, points[i].Y - 10);
+                canvas.Children.Add(textBlock);
+            }
         }
+
+        private double Distance(Point p1, Point p2)
+        {
+            return Math.Sqrt(Math.Pow(p1.X - p2.X, 2) + Math.Pow(p1.Y - p2.Y, 2));
+        }
+
+        
         private void DisplayGeneration()
         {
-            ClearCanvas();
             generationCount++;
-
             LegendTextBlock.Text = $"Generation: {generationCount}\nBest Route Length: {ga.BestRouteLength()}\n{ga.BestRouteToString()}";
 
-            DrawBestRoute();
+            DrawBestRoute(ga.GetBestRoute());
         }
 
         private void ClearCanvas()
@@ -92,46 +143,33 @@ namespace WpfApp1_M
         }
         private void ClearHighlight()
         {
-            
-            for (int i = 0; i < GraphCanvas.Children.Count; i++)
+
+            foreach (var line in allLines)
             {
-                if (GraphCanvas.Children[i] is Line line && line.Stroke == Brushes.Green)
-                {
-                    GraphCanvas.Children.RemoveAt(i);
-                    i--;
-                }
+                line.Stroke = Brushes.Gray;
+                line.StrokeThickness = 1;
             }
         }
-        private void DrawBestRoute()
+        private void DrawBestRoute(int[] bestRoute)
         {
             ClearHighlight();
-            
-            var bestRoute = ga.GetBestRoute();
-            if (bestRoute == null || bestRoute.Length == 0) return;
-
-            Point[] bestRouteCoordinates = GetPointCoordinates(bestRoute.Length);
 
             if (bestRoute.Length > 0)
             {
-                Point previousPoint = bestRouteCoordinates[bestRoute[0]];
-
-                for (int i = 1; i < bestRoute.Length; i++)
+                for (int i = 0; i < bestRoute.Length - 1; i++)
                 {
-                    Point currentPoint = bestRouteCoordinates[bestRoute[i]];
+                    int startIndex = bestRoute[i];
+                    int endIndex = bestRoute[i + 1];
+                    //попытка найти существующую линию, чтобы ее "подсветить" и не создавать новую, иначе изначальный график стирается
+                    var lineToHighlight = allLines.FirstOrDefault(line =>
+                            line.X1 == fixedCoordinates[startIndex].X && line.Y1 == fixedCoordinates[startIndex].Y &&
+                            line.X2 == fixedCoordinates[endIndex].X && line.Y2 == fixedCoordinates[endIndex].Y);
 
-                    // Рисуем линию для лучшего пути
-                    Line line = new Line
+                    if (lineToHighlight != null)
                     {
-                        X1 = previousPoint.X,
-                        Y1 = previousPoint.Y,
-                        X2 = currentPoint.X,
-                        Y2 = currentPoint.Y,
-                        Stroke = Brushes.Green, // Подсвечиваем линию
-                        StrokeThickness = 2
-                    };
-                    GraphCanvas.Children.Add(line);
-
-                    previousPoint = currentPoint;
+                        lineToHighlight.Stroke = Brushes.Green;
+                        lineToHighlight.StrokeThickness = 2;
+                    }
                 }
             }
             else
@@ -139,35 +177,16 @@ namespace WpfApp1_M
                 MessageBox.Show("Best route indices are empty after retrieval.");
             }
         }
-
-        private Point[] GetPointCoordinates(int cityCount)
-        {
-
-            fixedCoordinates = new Point[cityCount];
-            double canvasWidth = GraphCanvas.ActualWidth;
-            double canvasHeight = GraphCanvas.ActualHeight;
-
-            for (int i = 0; i < cityCount; i++)
-            {
-                double x = (canvasWidth / (cityCount + 1)) * (i + 1); // Разделяем пространство по X
-                double y = canvasHeight / 2; // Центрируем по Y
-                fixedCoordinates[i] = new Point(x, y);
-            }
-            return fixedCoordinates;
-        }
-
         protected override void OnKeyDown(KeyEventArgs e)
         {
             base.OnKeyDown(e);
             if (e.Key == Key.X)
             {
-                // Финальный график
                 MessageBox.Show($"Result:\nAt generation {generationCount}\nBest Route Length: {ga.BestRouteLength()}\n{ga.BestRouteToString()}");
             }
             else
             if (e.Key == Key.N)
             {
-                // Запуск следующего поколения
                 ga.Run();
                 DisplayGeneration();
             }
@@ -188,6 +207,7 @@ namespace WpfApp1_M
                     });
                 }
                 ga = new GeneticAlgorithm(matrix, populationSize: 10, generations: 10);
+                DrawInitialGraph(GraphCanvas, matrix);
             }
             else
             {

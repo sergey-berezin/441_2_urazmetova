@@ -6,20 +6,21 @@
         xmlns:local="clr-namespace:WpfApp1_M"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
-    <Grid RenderTransformOrigin="0.34,0.467">
+    <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="169" />
             <ColumnDefinition />
         </Grid.ColumnDefinitions>
         <Grid Grid.Column="0">
+            <TextBox x:Name="InputTextBox" HorizontalAlignment="Center" Margin="0,20,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="148" RenderTransformOrigin="-0.996,-1.64" Height="23"/>
             <Button Click="GenerateMatrix_Click" Content="Генерировать" HorizontalAlignment="Center" Margin="0,56,0,0" VerticalAlignment="Top" Width="80"/>
+            <DataGrid x:Name="MatrixDataGrid" AutoGenerateColumns="False" Margin="10,102,10,107"/>
             <Button Click="StartGeneticAlgorithm_click" Content="StartGeneticAlgorithm" HorizontalAlignment="Center" Margin="0,379,0,0" VerticalAlignment="Top"/>
         </Grid>
-        <TextBox x:Name="InputTextBox" HorizontalAlignment="Center" Margin="0,20,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="148" RenderTransformOrigin="-0.996,-1.64" Height="23"/>
-        <DataGrid x:Name="MatrixDataGrid" AutoGenerateColumns="False" Margin="10,102,10,107"/>
-        <Canvas x:Name="GraphCanvas" Background="White" Grid.Column="1"/>
-        <TextBlock x:Name="LegendTextBlock" Grid.Column="1" HorizontalAlignment="Left" Margin="490,19,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Height="30" Width="118"/>
-
-
+        <Grid Grid.Column="1">
+            <Canvas x:Name="GraphCanvas" Background="White" Grid.Column="1"/>
+        </Grid>
+        <TextBlock x:Name="LegendTextBlock" Grid.Column="1" HorizontalAlignment="Left" Margin="490,19,0,0" TextWrapping="Wrap"  VerticalAlignment="Top"/>
+        
     </Grid>
 </Window>
