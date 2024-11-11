@@ -185,7 +185,7 @@ namespace WpfApp1_M
                 MessageBox.Show($"Result:\nAt generation {generationCount}\nBest Route Length: {ga.BestRouteLength()}\n{ga.BestRouteToString()}");
             }
             else
-            if (e.Key == Key.N)
+            if (e.Key == Key.Space)
             {
                 ga.Run();
                 DisplayGeneration();
@@ -208,6 +208,7 @@ namespace WpfApp1_M
                 }
                 ga = new GeneticAlgorithm(matrix, populationSize: 10, generations: 10);
                 DrawInitialGraph(GraphCanvas, matrix);
+                generationCount = 0;
             }
             else
             {
@@ -222,7 +223,7 @@ namespace WpfApp1_M
 
             for (int i = 0; i < size; i++)
             {
-                for (int j = 0; j < size; j++)
+                for (int j = i + 1; j < size; j++)
                 {
                     if (i == j)
                     {
@@ -230,7 +231,9 @@ namespace WpfApp1_M
                     }
                     else
                     {
-                        matrix[i, j] = rand.Next(1, 100);
+                        double value = rand.Next(1, 100);
+                        matrix[i, j] = value;
+                        matrix[j, i] = value;
                     }
                 }
             }
