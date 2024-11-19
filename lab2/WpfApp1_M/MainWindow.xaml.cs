@@ -22,22 +22,37 @@ namespace WpfApp1_M
         private Point[] fixedCoordinates;
         private List<Line> allLines = new List<Line>();
         private int generationCount = 0;
+
+        private CancellationTokenSource cancellationTokenSource;
         public MainWindow()
         {
             InitializeComponent();
         }
 
-        private void StartGeneticAlgorithm_click(object sender, RoutedEventArgs e)
+        private async void StartGeneticAlgorithm_click(object sender, RoutedEventArgs e)
         {
             if (ga != null)
             {
-                ga.Run();
+                cancellationTokenSource = new CancellationTokenSource();
+                CancellationToken token = cancellationTokenSource.Token;
+                //ga.Run();
+                await Task.Factory.StartNew(() => RunGeneticAlgorithm(token), token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
                 //DrawInitialGraph(GraphCanvas, matrix);
                 DisplayGeneration();
             }
             else
             {
                 MessageBox.Show("Сначала сгенерируйте матрицу.");
+            }
+        }
+        private void RunGeneticAlgorithm(CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                ga.Run();
+                Dispatcher.Invoke(() => DisplayGeneration());
+
+                //Thread.Sleep(500);
             }
         }
         private void DrawInitialGraph(Canvas canvas, double[,] distanceMatrix)
@@ -182,14 +197,15 @@ namespace WpfApp1_M
             base.OnKeyDown(e);
             if (e.Key == Key.X)
             {
+                cancellationTokenSource?.Cancel();
                 MessageBox.Show($"Result:\nAt generation {generationCount}\nBest Route Length: {ga.BestRouteLength()}\n{ga.BestRouteToString()}");
             }
-            else
-            if (e.Key == Key.Space)
-            {
-                ga.Run();
-                DisplayGeneration();
-            }
+            //else
+            //if (e.Key == Key.Space)
+            //{
+            //    ga.Run();
+            //    DisplayGeneration();
+            //}
         }
         private void GenerateMatrix_Click(object sender, RoutedEventArgs e)
         {
