@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Windows;
 
 namespace WpfApp1_M
 {
@@ -30,14 +31,25 @@ namespace WpfApp1_M
             return new List<Experiment>();
         }
 
-        public void SaveExperiment(string experimentName, List<Route> population)
+        public void SaveExperiment(string experimentName, List<Route> population, double[,] distanceMatrix)
         {
             string populationFile = Path.Combine(PopulationDirectory, $"{experimentName}_population.json");
 
-            string populationJson = JsonConvert.SerializeObject(population, Formatting.Indented);
+            var populationData = new PopulationData
+            {
+                DistanceMatrix = distanceMatrix,
+                Population = population.Select(route => new RouteData
+                {
+                    Cities = route.Cities,
+                    Length = route.Length
+                }).ToList()
+            };
+
+            string populationJson = JsonConvert.SerializeObject(populationData, Formatting.Indented);
             File.WriteAllText(populationFile, populationJson);
 
             List<Experiment> experiments = LoadExperiments();
+
             var existingExperiment = experiments.FirstOrDefault(e => e.Name == experimentName);
             if (existingExperiment == null)
             {
@@ -54,25 +66,25 @@ namespace WpfApp1_M
         
         public void LoadExperimentPopulation(string experimentName, GeneticAlgorithm ga)
         {
-            List<Experiment> experiments = LoadExperiments();
+            string runsFileName = "runs.json";
+            string runsJson = File.ReadAllText(runsFileName);
+            var experiments = JsonConvert.DeserializeObject<List<Experiment>>(runsJson);
+
             var experiment = experiments.FirstOrDefault(e => e.Name == experimentName);
-
-            if (experiment == null)
+            if (experiment != null)
             {
-                throw new Exception("Эксперимент не найден.");
-            }
+                string populationFileName = experiment.PopulationFileName;
+                string populationJson = File.ReadAllText(populationFileName);
+                var populationData = JsonConvert.DeserializeObject<PopulationData>(populationJson);
 
-            string populationFile = experiment.PopulationFileName;
+                ga.distanceMatrix = populationData.DistanceMatrix;
+                ga.SetPopulation(populationData.Population.Select(r => new Route(r.Cities, populationData.DistanceMatrix)).ToList());
 
-            if (File.Exists(populationFile))
-            {
-                string populationJson = File.ReadAllText(populationFile);
-                var population = JsonConvert.DeserializeObject<List<Route>>(populationJson);
-                ga.SetPopulation(population);
+                Console.WriteLine($"Эксперимент {experimentName} загружен.");
             }
             else
             {
-                throw new Exception("Популяция для эксперимента не найдена.");
+                Console.WriteLine($"Эксперимент с именем {experimentName} не найден.");
             }
         }
     }
@@ -81,5 +93,16 @@ namespace WpfApp1_M
     {
         public string Name { get; set; }
         public string PopulationFileName { get; set; }
+    }
+    public class PopulationData
+    {
+        public double[,] DistanceMatrix { get; set; }
+        public List<RouteData> Population { get; set; }
+    }
+
+    public class RouteData
+    {
+        public List<int> Cities { get; set; }
+        public double Length { get; set; }
     }
 }

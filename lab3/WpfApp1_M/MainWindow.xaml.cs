@@ -30,6 +30,9 @@ namespace WpfApp1_M
             InitializeComponent();
             experimentManager = new Manager();
             LoadExperimentsList();
+            ga = new GeneticAlgorithm(new double[,] { { 0, 2, 9 },
+                                                      { 2, 0, 6 },
+                                                      { 9, 6, 0 } }, 10, 10);
         }
 
         private async void StartGeneticAlgorithm_click(object sender, RoutedEventArgs e)
@@ -312,7 +315,16 @@ namespace WpfApp1_M
                 try
                 {
                     experimentManager.LoadExperimentPopulation(selectedExperimentName, ga);
-                    MessageBox.Show($"Эксперимент {selectedExperimentName} загружен.");
+
+                    //if (ga.population.Count > 0)
+                    //{
+                    //    Route firstRoute = ga.population.First();
+                    //    MessageBox.Show($"Первый маршрут после загрузки: {string.Join(" -> ", firstRoute.Cities)}");
+                    //    MessageBox.Show($"Длина первого маршрута: {firstRoute.Length}");
+                    //}
+                    DrawInitialGraph(GraphCanvas, ga.distanceMatrix);
+                    DisplayGeneration();
+
                 }
                 catch (Exception ex)
                 {
@@ -321,17 +333,59 @@ namespace WpfApp1_M
             }
         }
 
+
+        public static string ShowInputDialog(string title, string prompt)
+        {
+            var inputBox = new Window
+            {
+                Title = title,
+                Width = 300,
+                Height = 150,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Owner = Application.Current.MainWindow
+            };
+
+            var grid = new Grid();
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            var label = new Label { Content = prompt, Margin = new Thickness(10) };
+            Grid.SetRow(label, 0);
+
+            var textBox = new TextBox { Margin = new Thickness(10) };
+            Grid.SetRow(textBox, 1);
+
+            var button = new Button { Content = "OK", Margin = new Thickness(10) };
+            Grid.SetRow(button, 2);
+            button.Click += (sender, e) =>
+            {
+                inputBox.DialogResult = true;
+                inputBox.Close();
+            };
+
+            grid.Children.Add(label);
+            grid.Children.Add(textBox);
+            grid.Children.Add(button);
+
+            inputBox.Content = grid;
+            inputBox.ShowDialog();
+
+            return textBox.Text;
+        }
+
         private void SaveExperiment_Click(object sender, RoutedEventArgs e)
         {
-            string experimentName = ExperimentNameTextBox.Text;
-            if (string.IsNullOrEmpty(experimentName))
+            string experimentName = ShowInputDialog("Введите название эксперимента", "Название эксперимента:");
+            if (!string.IsNullOrEmpty(experimentName))
             {
-                MessageBox.Show("Пожалуйста, введите имя для эксперимента.");
-                return;
+                experimentManager.SaveExperiment(experimentName, ga.population, ga.distanceMatrix);
+                MessageBox.Show("Эксперимент успешно сохранен.");
             }
-
-            experimentManager.SaveExperiment(experimentName, ga.population);
-            MessageBox.Show($"Эксперимент {experimentName} сохранен.");
+            else
+            {
+                MessageBox.Show("Название эксперимента не может быть пустым.");
+            }
         }
 
         private void LoadExperiment_Click(object sender, RoutedEventArgs e)

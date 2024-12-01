@@ -9,7 +9,7 @@ namespace ClassLibrary1
     public class GeneticAlgorithm
     {
         public List<Route> population;
-        private double[,] distanceMatrix;
+        public double[,] distanceMatrix; 
         private int populationSize;
         private int generations;
 
