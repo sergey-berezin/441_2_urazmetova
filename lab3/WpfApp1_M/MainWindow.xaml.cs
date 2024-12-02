@@ -58,7 +58,7 @@ namespace WpfApp1_M
                 ga.Run();
                 Dispatcher.Invoke(() => DisplayGeneration());
 
-                Thread.Sleep(500);
+                Thread.Sleep(300);
             }
         }
         private void DrawInitialGraph(Canvas canvas, double[,] distanceMatrix)
@@ -314,6 +314,7 @@ namespace WpfApp1_M
             {
                 try
                 {
+                    generationCount = 0;
                     experimentManager.LoadExperimentPopulation(selectedExperimentName, ga);
 
                     //if (ga.population.Count > 0)
@@ -381,37 +382,12 @@ namespace WpfApp1_M
             {
                 experimentManager.SaveExperiment(experimentName, ga.population, ga.distanceMatrix);
                 MessageBox.Show("Эксперимент успешно сохранен.");
+                LoadExperimentsList();
             }
             else
             {
                 MessageBox.Show("Название эксперимента не может быть пустым.");
             }
         }
-
-        private void LoadExperiment_Click(object sender, RoutedEventArgs e)
-        {
-            string selectedExperimentName = (string)ExperimentsListBox.SelectedItem;
-            if (!string.IsNullOrEmpty(selectedExperimentName))
-            {
-                try
-                {
-                    experimentManager.LoadExperimentPopulation(selectedExperimentName, ga);
-                    MessageBox.Show($"Эксперимент {selectedExperimentName} загружен и продолжает работать.");
-
-                    cancellationTokenSource = new CancellationTokenSource();
-                    CancellationToken token = cancellationTokenSource.Token;
-                    Task.Run(() => RunGeneticAlgorithm(token), token);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Ошибка при загрузке эксперимента: {ex.Message}");
-                }
-            }
-            else
-            {
-                MessageBox.Show("Выберите эксперимент для загрузки.");
-            }
-        }
-
     }
 }
